@@ -11,6 +11,13 @@ const setDay = (day: number) => {
 
 <template>
   <div>
-    <button v-for="day in store.days" :key="day" @click="setDay(day)">{{ day }}</button>
+    <button
+      :class="[{ active: store.dayIndex + 1 === day }]"
+      v-for="day in store.days"
+      :key="day"
+      @click="setDay(day)"
+    >
+      {{ day }}
+    </button>
   </div>
 </template>

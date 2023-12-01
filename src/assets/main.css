@@ -18,3 +18,8 @@ button {
   background: var(--color-background);
   margin-bottom: 1rem;
 }
+
+button.active {
+  color: var(--color-background);
+  background: var(--color-text);
+}

@@ -1,4 +1,4 @@
-import { ref, shallowRef, watch } from 'vue'
+import { ref, shallowRef, watch, computed } from 'vue'
 import { defineStore } from 'pinia'
 
 export const useInputData = defineStore('inputData', () => {
@@ -8,6 +8,7 @@ export const useInputData = defineStore('inputData', () => {
   const day = ref('')
   const variant = ref('')
   const variants = ref<string[]>([])
+  const dayIndex = computed(() => Number(day.value) - 1)
 
   const getKey = (day: string, variant: string) => `${day}_${variant}`
 
@@ -55,5 +56,5 @@ export const useInputData = defineStore('inputData', () => {
     }
   )
 
-  return { getData, current, day, variant, variants, days, getDays }
+  return { getData, current, day, variant, variants, days, getDays, dayIndex }
 })

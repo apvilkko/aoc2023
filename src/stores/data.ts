@@ -1,12 +1,17 @@
 import { ref, shallowRef, watch, computed } from 'vue'
 import { defineStore } from 'pinia'
 
+const getInitial = (key: string) => {
+  const params = new URLSearchParams(document.location.search)
+  return params.get(key) || ''
+}
+
 export const useInputData = defineStore('inputData', () => {
   const data = shallowRef<Record<string, string>>({})
   const current = ref('')
   const days = ref<number[]>([])
-  const day = ref('')
-  const variant = ref('')
+  const day = ref(getInitial('day'))
+  const variant = ref(getInitial('variant'))
   const variants = ref<string[]>([])
   const dayIndex = computed(() => Number(day.value) - 1)
 
@@ -38,16 +43,17 @@ export const useInputData = defineStore('inputData', () => {
     }
   }
 
-  watch(
-    () => day.value,
-    async (newDay) => {
-      const resp = await fetch(`/api/day/${newDay}`)
+  const getVariants = async (d: string | undefined) => {
+    if (d) {
+      const resp = await fetch(`/api/day/${d}`)
       if (resp.ok) {
         const arr = await resp.json()
         variants.value = arr
       }
     }
-  )
+  }
+
+  watch(() => day.value, getVariants)
 
   watch(
     () => variant.value,
@@ -55,6 +61,10 @@ export const useInputData = defineStore('inputData', () => {
       await getData()
     }
   )
+
+  getDays()
+  getVariants(day.value)
+  getData()
 
   return { getData, current, day, variant, variants, days, getDays, dayIndex }
 })

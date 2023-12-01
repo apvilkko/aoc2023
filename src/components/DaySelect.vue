@@ -2,7 +2,6 @@
 import { useInputData } from '@/stores/data'
 
 const store = useInputData()
-store.getDays()
 
 const setDay = (day: number) => {
   store.day = String(day).padStart(2, '0')

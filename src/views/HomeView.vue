@@ -1,9 +1,15 @@
 <script setup lang="ts">
-import TheWelcome from '../components/TheWelcome.vue'
+import DaySelect from '@/components/DaySelect.vue'
+import VariantSelect from '@/components/VariantSelect.vue'
+import { useInputData } from '@/stores/data'
+
+const store = useInputData()
 </script>
 
 <template>
   <main>
-    <TheWelcome />
+    <DaySelect />
+    <VariantSelect />
+    {{ store.current }}
   </main>
 </template>

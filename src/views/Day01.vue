@@ -1,16 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { sum } from 'lodash/fp'
+import { splitLines } from '@/lib/helpers'
 
 const props = defineProps<{ data: string }>()
 
 const result = ref()
 const result2 = ref()
 
-const splitLines = () => props.data.split('\r\n').filter((x) => !!x)
-
 const part1 = () => {
-  const numbers = splitLines().map((line: string) => {
+  const numbers = splitLines(props.data).map((line: string) => {
     let first
     let last
     for (let i = 0; i < line.length; ++i) {
@@ -47,7 +46,7 @@ const getTextNumber = (line: string, index: number) => {
 }
 
 const part2 = () => {
-  const numbers = splitLines().map((line: string) => {
+  const numbers = splitLines(props.data).map((line: string) => {
     let first
     let last
     for (let i = 0; i < line.length; ++i) {

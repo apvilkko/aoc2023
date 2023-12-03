@@ -5,9 +5,10 @@ import { useInputData } from '@/stores/data'
 import LocationUpdater from '@/components/LocationUpdater.vue'
 import Day01 from './Day01.vue'
 import Day02 from './Day02.vue'
+import Day03 from './Day03.vue'
 
 const store = useInputData()
-const components = [Day01, Day02]
+const components = [Day01, Day02, Day03]
 </script>
 
 <template>

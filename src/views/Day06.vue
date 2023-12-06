@@ -31,7 +31,7 @@ const waysToWin = input
   .map((race) => {
     // -x^2 + time*x - record
     const roots = solveQuadratic(-1, race.time, -1 * race.record)
-    // eliminate even numbers since they correspond to 0 hold time and full hold time
+    // eliminate even numbers since they correspond to equal record (not winning)
     return [
       Number.isInteger(roots[0]) ? roots[0] + 1 : Math.ceil(roots[0]),
       Number.isInteger(roots[1]) ? roots[1] - 1 : Math.floor(roots[1])

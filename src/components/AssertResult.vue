@@ -10,7 +10,7 @@ defineProps<{ expected?: any; value: any }>()
   </div>
   <div class="assert nok" v-else>
     Not equal:<br />Expected: {{ expected }}<br />Actual:
-    <pre>{{ JSON.stringify(value, null, 2) }}</pre>
+    <pre>{{ value?.toString ? value.toString() : JSON.stringify(value, null, 2) }}</pre>
   </div>
 </template>
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { equals } from 'lodash/fp'
 
-defineProps<{ expected?: any; value: any }>()
+defineProps<{ expected?: any; value: any; pretty?: boolean }>()
 </script>
 
 <template>
@@ -10,7 +10,7 @@ defineProps<{ expected?: any; value: any }>()
   </div>
   <div class="assert nok" v-else>
     Not equal:<br />Expected: {{ expected }}<br />Actual:
-    <pre>{{ value?.toString ? value.toString() : JSON.stringify(value, null, 2) }}</pre>
+    <pre>{{ value?.toString && !pretty ? value.toString() : JSON.stringify(value, null, 2) }}</pre>
   </div>
 </template>
 

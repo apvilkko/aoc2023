@@ -123,22 +123,63 @@ const getCombinations = (x: Item) => {
   return possibles.length
 }
 
-const getCombinations2 = (x: Item) => {
-  // start with minimum length for counts
-  const len = sum(x.counts) + x.counts.length - 1
-  let out = 1
-  console.log('start', out, x.row.length, x.counts.length)
-  for (let i = len; i < x.row.length; ++i) {
-    // each increase in row size multiplies previous combinations by counts length + 1
-    out *= x.counts.length + 1
-    console.log('  after', i, out)
+const getKey = (row: string, counts: number[]) => `${row}-${counts.join(',')}`
+
+function count(row: string, counts: number[], cache: Record<string, number>, level = 0) {
+  console.log('count', row, counts, level)
+  if ((row.length === 0 || row.split('').every((x) => x === OPERATIONAL)) && counts.length === 0) {
+    console.log('  end')
+    return 1
   }
-  return out
+  if (row.length === 0 || counts.length === 0) {
+    console.log('  terminate')
+    return 0
+  }
+  if (row.length < sum(counts) + (counts.length - 1)) {
+    console.log('  sanity check')
+    return 0
+  }
+  const key = getKey(row, counts)
+  const cacheValue = cache[key]
+  if (cacheValue) {
+    console.log('  <- cache', cacheValue)
+    return cacheValue
+  }
+
+  let c = 0
+
+  let matched = false
+  for (let i = 0; i < counts[0]; ++i) {
+    if (
+      row
+        .slice(i, counts[0] + i)
+        .split('')
+        .every((x) => x === DAMAGED || x === UNKNOWN) &&
+      (row[counts[0] + i] !== DAMAGED || counts[0] + i > row.length - 1)
+    ) {
+      console.log('  recursing to', row.slice(counts[0] + i), level)
+      // path of placing the count item here
+      c += count(row.slice(counts[0] + i + 1), counts.slice(1), cache, level + 1)
+      // path of not placing the item
+      c += count(row.slice(counts[0] + i), counts, cache, level + 1)
+      matched = true
+    }
+  }
+  if (!matched) {
+    //console.log('  advancing to', row.slice(1))
+    c += count(row.slice(1), counts, cache)
+  }
+
+  cache[key] = c
+
+  return c
 }
 
 const part1 = () => {
   const input = parseInput()
-  const combinations = input.map((x) => getCombinations2(x))
+  const cache = {}
+  const combinations = input.slice(2, 3).map((x) => count(x.row.join(''), x.counts, cache))
+  console.log(cache)
   //result.value = sum(combinations)
   result.value = combinations
 }
@@ -153,10 +194,10 @@ const part2 = () => {
     }
   })
 
-  const combinations = unfolded.map((x) => getCombinations2(x))
+  //const combinations = unfolded.map((x) => getCombinations2(x))
 
   //result2.value = sum(combinations)
-  result2.value = combinations
+  //result2.value = combinations
 }
 
 const run = () => {

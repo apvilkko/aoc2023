@@ -2,7 +2,18 @@
 import { ref } from 'vue'
 import AssertResult from '@/components/AssertResult.vue'
 import { splitLines, splitNumbers } from '@/lib/helpers'
-import { flow, head, last, map, max, split, sum, take } from 'lodash/fp'
+import {
+  flow,
+  head,
+  last,
+  map,
+  max,
+  split,
+  sum,
+  take,
+  trimCharsEnd,
+  trimCharsStart
+} from 'lodash/fp'
 
 const props = defineProps<{ data: string; variant: string }>()
 
@@ -126,23 +137,43 @@ const getCombinations = (x: Item) => {
 const getKey = (row: string, counts: number[]) => `${row}-${counts.join(',')}`
 
 function count(row: string, counts: number[], cache: Record<string, number>, level = 0) {
-  console.log('count', row, counts, level)
-  if ((row.length === 0 || row.split('').every((x) => x === OPERATIONAL)) && counts.length === 0) {
-    console.log('  end')
+  const r = trimCharsStart(OPERATIONAL)(trimCharsEnd(OPERATIONAL)(row))
+
+  const key = getKey(r, counts)
+
+  //console.log('count', r, counts, level)
+  if (r.length === 0 && counts.length === 0) {
+    //console.log('  end')
     return 1
   }
-  if (row.length === 0 || counts.length === 0) {
-    console.log('  terminate')
+  if (r.length === 0 || counts.length === 0) {
+    //console.log('  terminate')
     return 0
   }
-  if (row.length < sum(counts) + (counts.length - 1)) {
-    console.log('  sanity check')
+  if (r.length < sum(counts) + (counts.length - 1)) {
+    //console.log('  sanity check')
     return 0
   }
-  const key = getKey(row, counts)
+  if (r === '???' && counts.length === 1 && counts[0] === 1) {
+    return 3
+  }
+  const rs = r.split('')
+  const unknownCount = rs.filter((x) => x === UNKNOWN).length
+  const damagedCount = rs.filter((x) => x === DAMAGED).length
+  if (
+    r.length === counts[0] &&
+    counts.length === 1 &&
+    unknownCount + damagedCount === rs.length &&
+    damagedCount > 0
+  ) {
+    // only one way to place this
+    //console.log('  end checking')
+    return 1
+  }
+
   const cacheValue = cache[key]
   if (cacheValue) {
-    console.log('  <- cache', cacheValue)
+    //console.log('  <- cache', cacheValue)
     return cacheValue
   }
 
@@ -150,24 +181,32 @@ function count(row: string, counts: number[], cache: Record<string, number>, lev
 
   let matched = false
   for (let i = 0; i < counts[0]; ++i) {
+    const chars = r.slice(i, counts[0] + i).split('')
     if (
-      row
-        .slice(i, counts[0] + i)
-        .split('')
-        .every((x) => x === DAMAGED || x === UNKNOWN) &&
-      (row[counts[0] + i] !== DAMAGED || counts[0] + i > row.length - 1)
+      chars.every((x) => x === DAMAGED || x === UNKNOWN) &&
+      (r[counts[0] + i] !== DAMAGED || counts[0] + i > r.length - 1)
     ) {
-      console.log('  recursing to', row.slice(counts[0] + i), level)
-      // path of placing the count item here
-      c += count(row.slice(counts[0] + i + 1), counts.slice(1), cache, level + 1)
-      // path of not placing the item
-      c += count(row.slice(counts[0] + i), counts, cache, level + 1)
+      //console.log('  recursing to', r.slice(counts[0] + i), level)
       matched = true
+      // path of placing the count item here
+      const newRow = r.slice(counts[0] + i + 1)
+      const newCounts = counts.slice(1)
+      //console.log('  new row', newRow.length, newCounts[0])
+      c += count(newRow, newCounts, cache, level + 1)
+      if (chars[0] === DAMAGED) {
+        // this spot needs to be filled, go no further with this count
+        break
+      }
+      if (chars[0] === UNKNOWN) {
+        // path of NOT placing the item, only if possible
+        //console.log('  taking unknown path', chars[0], r, i)
+        c += count(r.slice(counts[0] + i), counts, cache, level + 1)
+      }
     }
   }
   if (!matched) {
-    //console.log('  advancing to', row.slice(1))
-    c += count(row.slice(1), counts, cache)
+    //console.log('  advancing to', r.slice(1))
+    c += count(r.slice(1), counts, cache)
   }
 
   cache[key] = c
@@ -178,10 +217,9 @@ function count(row: string, counts: number[], cache: Record<string, number>, lev
 const part1 = () => {
   const input = parseInput()
   const cache = {}
-  const combinations = input.slice(2, 3).map((x) => count(x.row.join(''), x.counts, cache))
-  console.log(cache)
-  //result.value = sum(combinations)
-  result.value = combinations
+  const combinations = input.map((x) => count(x.row.join(''), x.counts, cache))
+  result.value = sum(combinations)
+  //result.value = combinations
 }
 const part2 = () => {
   const input = parseInput()
@@ -194,15 +232,16 @@ const part2 = () => {
     }
   })
 
-  //const combinations = unfolded.map((x) => getCombinations2(x))
+  const cache = {}
+  const combinations = unfolded.map((x) => count(x.row.join(''), x.counts, cache))
 
   //result2.value = sum(combinations)
-  //result2.value = combinations
+  result2.value = combinations
 }
 
 const run = () => {
-  part1()
-  //part2()
+  //part1()
+  part2()
 }
 
 run()

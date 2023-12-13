@@ -134,12 +134,18 @@ const getCombinations = (x: Item) => {
   return possibles.length
 }
 
-const getKey = (row: string, counts: number[]) => `${row}-${counts.join(',')}`
+const getKey = (row: string, counts: number[]) => `${row} ${counts.join(',')}`
 
 function count(row: string, counts: number[], cache: Record<string, number>, level = 0) {
   const r = trimCharsStart(OPERATIONAL)(trimCharsEnd(OPERATIONAL)(row))
 
   const key = getKey(r, counts)
+
+  const cacheValue = cache[key]
+  if (cacheValue) {
+    //console.log('  <- cache', cacheValue)
+    return cacheValue
+  }
 
   //console.log('count', r, counts, level)
   if (r.length === 0 && counts.length === 0) {
@@ -152,11 +158,10 @@ function count(row: string, counts: number[], cache: Record<string, number>, lev
   }
   if (r.length < sum(counts) + (counts.length - 1)) {
     //console.log('  sanity check')
+    cache[key] = 0
     return 0
   }
-  if (r === '???' && counts.length === 1 && counts[0] === 1) {
-    return 3
-  }
+
   const rs = r.split('')
   const unknownCount = rs.filter((x) => x === UNKNOWN).length
   const damagedCount = rs.filter((x) => x === DAMAGED).length
@@ -168,13 +173,23 @@ function count(row: string, counts: number[], cache: Record<string, number>, lev
   ) {
     // only one way to place this
     //console.log('  end checking')
+    cache[key] = 1
     return 1
   }
 
-  const cacheValue = cache[key]
-  if (cacheValue) {
-    //console.log('  <- cache', cacheValue)
-    return cacheValue
+  const maxCountLen = max(counts) as number
+  const matches = r.matchAll(/#+/g)
+  for (const match of matches) {
+    const matchLen = match[0].length
+    if (matchLen > maxCountLen) {
+      // doesn't fit
+      cache[key] = 0
+      return 0
+    }
+    if (match.index === 0 && counts[0] < matchLen) {
+      cache[key] = 0
+      return 0
+    }
   }
 
   let c = 0
@@ -214,17 +229,33 @@ function count(row: string, counts: number[], cache: Record<string, number>, lev
   return c
 }
 
+// initialize some combinations
+const initCache = () => {
+  return {
+    '?? 1': 2,
+    '??? 1': 3,
+    '???? 1': 4,
+    '??? 2': 2,
+    '???? 2,1': 1,
+    '???? 1,2': 1
+  }
+}
+
 const part1 = () => {
   const input = parseInput()
-  const cache = {}
-  const combinations = input.map((x) => count(x.row.join(''), x.counts, cache))
+
+  const cache = initCache()
+  const combinations = input.map((x) => {
+    const res = count(x.row.join(''), x.counts, cache)
+    return res
+  })
   result.value = sum(combinations)
   //result.value = combinations
 }
 const part2 = () => {
   const input = parseInput()
 
-  const unfolded = input.map((x) => {
+  const unfolded = input.slice(5, 6).map((x) => {
     const row = Array.from({ length: 5 }).flatMap(() => [...x.row, '?'])
     return {
       counts: Array.from({ length: 5 }).flatMap(() => x.counts),
@@ -232,8 +263,13 @@ const part2 = () => {
     }
   })
 
-  const cache = {}
-  const combinations = unfolded.map((x) => count(x.row.join(''), x.counts, cache))
+  const cache = initCache()
+  const combinations = unfolded.map((x) => {
+    const res = count(x.row.join(''), x.counts, cache)
+
+    return res
+  })
+  console.log(cache)
 
   //result2.value = sum(combinations)
   result2.value = combinations

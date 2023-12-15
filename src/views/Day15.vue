@@ -2,8 +2,6 @@
 import { ref } from 'vue'
 import AssertResult from '@/components/AssertResult.vue'
 import { sum } from 'lodash/fp'
-import { X509Certificate } from 'crypto'
-import { convertCompilerOptionsFromJson } from 'typescript'
 
 const props = defineProps<{ data: string; variant: string }>()
 

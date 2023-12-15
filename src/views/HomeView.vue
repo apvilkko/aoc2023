@@ -17,6 +17,7 @@ import Day11 from './Day11.vue'
 import Day12 from './Day12.vue'
 import Day13 from './Day13.vue'
 import Day14 from './Day14.vue'
+import Day15 from './Day15.vue'
 
 const store = useInputData()
 const components = [
@@ -33,8 +34,8 @@ const components = [
   Day11,
   Day12,
   Day13,
-  Day14
-  // ,Day15
+  Day14,
+  Day15
   // ,Day16
   // ,Day17
   // ,Day18

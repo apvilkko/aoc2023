@@ -24,8 +24,17 @@ type ModuleConfig = {
   value?: boolean
 }
 
-const parseInput = (): ModuleConfig[] =>
-  flow([
+const getNameMap = (input: ModuleConfig[]) =>
+  input.reduce(
+    (acc, curr, i) => {
+      acc[curr.name] = i
+      return acc
+    },
+    {} as Record<string, number>
+  )
+
+const parseInput = (): ModuleConfig[] => {
+  const mods = flow([
     splitLines,
     map((line: string) => {
       const parts = line.split('->').map((x) => x.trim())
@@ -41,7 +50,18 @@ const parseInput = (): ModuleConfig[] =>
       const value = type === ModuleType.FlipFlop ? false : undefined
       return { type, name, output, memory, value }
     })
-  ])(props.data)
+  ])(props.data) as ModuleConfig[]
+  const nameMap = getNameMap(mods)
+  mods.forEach((m) => {
+    m.output.forEach((o) => {
+      const target = mods[nameMap[o]]
+      if (target && target.type === ModuleType.Conjunction) {
+        target.memory![m.name] = false
+      }
+    })
+  })
+  return mods
+}
 
 const receive = (
   name: string,
@@ -57,7 +77,7 @@ const receive = (
   }
   if (mod.type === ModuleType.Broadcaster) {
     mod.output.forEach((o) => {
-      console.log('broadcast to', o)
+      //console.log('broadcast to', o)
       outputs.push([o, pulse, name])
     })
   } else if (mod.type === ModuleType.FlipFlop) {
@@ -69,34 +89,31 @@ const receive = (
     }
   } else if (mod.type === ModuleType.Conjunction) {
     mod.memory![sender] = pulse
-    const value = Object.values(mod.memory!).every((x) => !!x)
-    console.log('conjunction', mod.memory, value)
+    const value = !Object.values(mod.memory!).every((x) => !!x)
     mod.output.forEach((o) => {
+      //console.log('  conjunction', name, pulse, sender, mod.memory, o, value)
       outputs.push([o, value, name])
     })
   }
   return outputs
 }
 
-const pushButton = (input: ModuleConfig[]) => {
-  let i = 0
-  const nameMap = input.reduce(
-    (acc, curr, i) => {
-      acc[curr.name] = i
-      return acc
-    },
-    {} as Record<string, number>
-  )
+const pushButton = (input: ModuleConfig[]): [number, number] => {
+  const nameMap = getNameMap(input)
   const pulse = false
-  const mod = input[i].name
-  const q = [[mod, pulse, undefined]]
-  let pulseCount = 1
+  const mod = input[nameMap.broadcaster].name
+  const q = [[mod, pulse, 'button']]
+  let pulseCount: [number, number] = [1, 0]
   while (q.length) {
     const v = q.shift()
+    //console.log(v[2], v[1] ? 'high' : 'low', '->', v[0])
     const ret = receive(v[0], v[1], v[2], input, nameMap)
     ret.forEach((r) => {
-      console.log(v[2], '->', v[0], v[1])
-      pulseCount++
+      if (r[1]) {
+        pulseCount[1]++
+      } else {
+        pulseCount[0]++
+      }
       q.push(r)
     })
   }
@@ -105,7 +122,14 @@ const pushButton = (input: ModuleConfig[]) => {
 
 const part1 = () => {
   const input = parseInput()
-  result.value = pushButton(input)
+  const totals = [0, 0]
+  for (let i = 0; i < 1000; ++i) {
+    //console.log('push', i)
+    const [lo, hi] = pushButton(input)
+    totals[0] += lo
+    totals[1] += hi
+  }
+  result.value = totals[0] * totals[1]
 }
 
 const part2 = () => {

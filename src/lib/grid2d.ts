@@ -41,6 +41,17 @@ export class Grid2d {
   subGrid(x0: number, y0: number) {
     return new Grid2d(this.rows.slice(y0).map((line) => line.slice(x0)))
   }
+
+  find(str: string): [x: number, y: number] {
+    for (let y = 0; y < this.height; ++y) {
+      for (let x = 0; x < this.width; ++x) {
+        if (this.rows[y][x] === str) {
+          return [x, y]
+        }
+      }
+    }
+    return [-1, -1]
+  }
 }
 
 export class Grid2dGeneric<T = number> {
